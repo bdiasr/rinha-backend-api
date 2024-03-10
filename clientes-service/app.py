@@ -107,18 +107,46 @@ async def create_item(id:int, transaction: Transaction):
 
 
 @app.get('/clientes/{id}/extrato')
-async def get_extract(id: int, db = Depends(get_db)):
-
-    cliente_extrato = db.query(Extract).filter(Extract.client.equals(id)).all()
+async def get_extract(id_cliente: int, extrato = Extract, db = Depends(get_db)):
+    
+    extratos = db.query(Extract).filter(Extract.id == id).all()
+    #transactions = db.query(Transaction).filter(Transaction.id == id).all()
     result = []
-    for transactions in cliente_extrato:
-        result.append({
-            'saldo': transactions.saldo,
-            'limite': transactions.limite,
-            'data_extrato': transactions.data_extrato
-        })
 
-    return result
+    for extrato in extratos:
+        result.append({
+            'saldo': extrato.saldo,
+            'limite': extrato.limite,
+            'data_extrato': extrato.data_extrato
+        })
+    '''
+    result.append("ultimas_transacoes:")
+
+    for transaction in transactions:
+        result.append({
+            'valor': transaction.valor,
+            'tipo': transaction.tipo,
+        })
+    '''
+    return result, 200
+
+
+
+
+
+'''clientes = await redis.get('cliente')
+    if clientes:
+        return json.loads(clientes)
+    
+    clientes = db.query(Cliente).all()
+    result = []
+    for cliente in clientes:
+        result.append({
+            'name': cliente.nome_cliente,
+        })
+    await redis.set('clients', json.dumps(result))
+
+    return result, 200'''
 
 @app.get('/products/{name}')
 async def get_product_by_name(name: str, db = Depends(get_db)):
