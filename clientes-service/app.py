@@ -41,7 +41,7 @@ class Product(Base):
 class Transaction(Base):
     value: int
     type: transactionType
-    description: str | None = None
+    description: str
 
 class Cliente(Base):
     __tablename__ = 'cliente'
