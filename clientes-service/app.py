@@ -48,9 +48,9 @@ class Product(Base):
 #     description = Column(Text)
 
 class Transaction(BaseModel):
-    value:  int
-    type: transactionType
-    description: str
+    valor:  int
+    tipo: transactionType
+    descricao: str
 
 class Cliente(Base):
     __tablename__ = 'cliente'
@@ -94,14 +94,14 @@ async def get_all_clients(db = Depends(get_db)):
 
 @app.post("/clientes/{id}/transacoes")
 async def create_item(id:int, transaction: Transaction):
-    transcation_dict = {"CLIENTE_TRANSACAO": id, "SALDO_D": transaction.value, "DESCRICAO_D": transaction.description}
+    transcation_dict = {"CLIENTE_TRANSACAO": id, "SALDO_D": transaction.valor, "DESCRICAO_D": transaction.descricao}
     db = Depends(get_db)
     
-    if(transaction.type is transactionType.D):
+    if(transaction.tipo is transactionType.D):
         db.execute('CALL DEBITO(CLIENTE_TRANSACAO, SALDO_D, DESCRICAO_D)', transcation_dict)
     # puxar a proc
     # mandar as coisas p proc
-    transaction_response = {"valor": transaction.value, "tipo": transaction.type, "descricao": transaction.description }
+    transaction_response = {"valor": transaction.valor, "tipo": transaction.tipo, "descricao": transaction.descricao }
     return transaction_response
 
 
