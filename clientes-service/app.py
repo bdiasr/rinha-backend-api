@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Query, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import create_engine, func, Column, Float, Integer, String, Text, Date
+from sqlalchemy import create_engine, func, Column, Float, Integer, String, Text, Date, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 from aioredis import create_redis_pool
 import random, lorem, json
@@ -94,12 +94,11 @@ async def get_all_clients(db = Depends(get_db)):
     return result, 200
 
 @app.post("/clientes/{id}/transacoes")
-async def create_item(id:int, transaction: Transaction):
-    transcation_dict = {"CLIENTE_TRANSACAO": id, "SALDO_D": transaction.valor, "DESCRICAO_D": transaction.descricao}
-    db = Depends(get_db)
-    
+async def create_item(id:int, transaction: Transaction, db = Depends(get_db)):
     if(transaction.tipo is transactionType.D):
-        db.execute('CALL DEBITO(CLIENTE_TRANSACAO, SALDO_D, DESCRICAO_D)', transcation_dict)
+        db.execute(text("CALL DEBITO({}, {}, {})".format(id, transaction.valor, transaction.descricao)))
+    elif(transaction.tipo is transactionType.C):
+        db.execute(text("CALL CREDITO({}, {}, {})".format(id, transaction.valor, transaction.descricao)))
     # puxar a proc
     # mandar as coisas p proc
     transaction_response = {"limite": transaction.valor, "saldo": transaction.tipo }
