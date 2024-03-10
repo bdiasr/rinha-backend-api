@@ -42,11 +42,11 @@ class Product(Base):
 class Extract(Base):
     __tablename__ = 'extrato'
 
-    id = Column(Integer, primary_key=True)
+    id_extrato = Column(Integer, primary_key=True)
     saldo =  Column(Integer)
     data_extrato = Column(Date)
-    limit = Column(Integer)
-    client = Column(Integer)
+    limite = Column(Integer)
+    cliente = Column(Integer)
 
 class Transaction(BaseModel):
     valor:  int
@@ -96,9 +96,9 @@ async def get_all_clients(db = Depends(get_db)):
 @app.post("/clientes/{id}/transacoes")
 async def create_item(id:int, transaction: Transaction, db = Depends(get_db)):
     if(transaction.tipo is transactionType.D):
-        db.execute(text("CALL DEBITO({}, {}, {})".format(id, transaction.valor, transaction.descricao)))
+        db.execute(text("CALL DEBITO({}, {}, '{}')".format(id, transaction.valor, transaction.descricao)))
     elif(transaction.tipo is transactionType.C):
-        db.execute(text("CALL CREDITO({}, {}, {})".format(id, transaction.valor, transaction.descricao)))
+        db.execute(text("CALL CREDITO({}, {}, '{}')".format(id, transaction.valor, transaction.descricao)))
     # puxar a proc
     # mandar as coisas p proc
     transaction_response = {"limite": transaction.valor, "saldo": transaction.tipo }
@@ -106,9 +106,9 @@ async def create_item(id:int, transaction: Transaction, db = Depends(get_db)):
 
 
 @app.get('/clientes/{id}/extrato')
-async def get_extract(id_cliente: int, extrato = Extract, db = Depends(get_db)):
+async def get_extract(id: int, extrato = Extract, db = Depends(get_db)):
     
-    extratos = db.query(Extract).filter(Extract.id == id).all()
+    extratos = db.query(Extract).filter(Extract.id_extrato == id).all()
     #transactions = db.query(Transaction).filter(Transaction.id == id).all()
     result = []
 
