@@ -1,11 +1,12 @@
 from fastapi import FastAPI, Query, Depends, HTTPException
-from sqlalchemy import create_engine, func, Column, Float, Integer, String
+from pydantic import BaseModel
+from sqlalchemy import create_engine, func, Column, Float, Integer, String, Text, Enum
 from sqlalchemy.orm import sessionmaker, declarative_base
 from aioredis import create_redis_pool
 import random, lorem, json
-from enum import Enum
+import enum
 
-class transactionType(Enum):
+class transactionType(enum.Enum):
     C = 'c'
     D = 'd'
 
@@ -38,8 +39,16 @@ class Product(Base):
     price = Column(Float)
     description = Column(String(500))
 
-class Transaction(Base):
-    value: int
+# class Transaction(Base):
+#     __tablename__ = 'transacao'
+
+#     id = Column(Integer, primary_key=True)
+#     value =  Column(Integer)
+#     type = Column(Enum(transactionType))
+#     description = Column(Text)
+
+class Transaction(BaseModel):
+    value:  int
     type: transactionType
     description: str
 
