@@ -1,8 +1,13 @@
 from fastapi import FastAPI, Query, Depends, HTTPException
-from sqlalchemy import create_engine, Column, Float, Integer, String
+from sqlalchemy import create_engine, func, Column, Float, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
 from aioredis import create_redis_pool
 import random, lorem, json
+from enum import Enum
+
+class transactionType(Enum):
+    C = 'c'
+    D = 'd'
 
 app = FastAPI()
 
@@ -33,6 +38,11 @@ class Product(Base):
     price = Column(Float)
     description = Column(String(500))
 
+class Transaction(Base):
+    value: int
+    type: transactionType
+    description: str | None = None
+
 class Cliente(Base):
     __tablename__ = 'cliente'
 
@@ -41,17 +51,6 @@ class Cliente(Base):
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
-
-# Add dummy product data
-# db = SessionLocal()
-# for i in range(1, 101):
-#     name = f'Product_{i}'
-#     price = round(random.uniform(1.99, 999.99), 2)
-#     description = lorem.get_sentence(count=2)
-#     product = Product(name=name, price=price, description=description)
-#     db.add(product)
-# db.commit()
-# db.close()
 
 # Set up Redis connection
 @app.on_event("startup")
@@ -67,23 +66,6 @@ async def shutdown_event():
     await redis.wait_closed()
 
 # API endpoints
-@app.get('/products')
-async def get_all_products(db = Depends(get_db)):
-    products = await redis.get('products')
-    if products:
-        return json.loads(products)
-    
-    products = db.query(Product).all()
-    result = []
-    for product in products:
-        result.append({
-            'name': product.name,
-            'price': product.price,
-            'description': product.description
-        })
-    await redis.set('products', json.dumps(result))
-
-    return result
 
 @app.get('/clientes')
 async def get_all_clients(db = Depends(get_db)):
@@ -99,7 +81,20 @@ async def get_all_clients(db = Depends(get_db)):
         })
     await redis.set('clients', json.dumps(result))
 
-    return result
+    return result, 200
+
+@app.post("/clientes/{id}/transacoes")
+async def create_item(id:int, transaction: Transaction):
+    transcation_dict = {"CLIENTE_TRANSACAO": id, "SALDO_D": transaction.value, "DESCRICAO_D": transaction.description}
+    db = Depends(get_db)
+    
+    if(transaction.type is transactionType.D):
+        db.execute('CALL DEBITO(CLIENTE_TRANSACAO, SALDO_D, DESCRICAO_D)', transcation_dict)
+    # puxar a proc
+    # mandar as coisas p proc
+    transaction_response = {"valor": transaction.value, "tipo": transaction.type, "descricao": transaction.description }
+    return transaction_response
+
 
 @app.get('/products/search')
 async def search_product(keyword: str = Query(..., min_length=1), db = Depends(get_db)):
