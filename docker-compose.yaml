@@ -29,7 +29,7 @@ services:
     image: postgres
     restart: always
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
       - ./postgresql.conf:/etc/postgresql/postgresql.conf
     environment:
       POSTGRES_USER: postgres
