@@ -86,7 +86,7 @@ async def get_all_products(db = Depends(get_db)):
     return result
 
 @app.get('/clientes')
-async def get_all_products(db = Depends(get_db)):
+async def get_all_clients(db = Depends(get_db)):
     clientes = await redis.get('cliente')
     if clientes:
         return json.loads(clientes)
@@ -97,7 +97,7 @@ async def get_all_products(db = Depends(get_db)):
         result.append({
             'name': cliente.nome_cliente,
         })
-    await redis.set('products', json.dumps(result))
+    await redis.set('clients', json.dumps(result))
 
     return result
 
