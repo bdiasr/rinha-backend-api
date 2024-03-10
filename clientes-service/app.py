@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Query, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import create_engine, func, Column, Float, Integer, String, Text, Enum
+from sqlalchemy import create_engine, func, Column, Float, Integer, String, Text, Date
 from sqlalchemy.orm import sessionmaker, declarative_base
 from aioredis import create_redis_pool
 import random, lorem, json
@@ -39,13 +39,14 @@ class Product(Base):
     price = Column(Float)
     description = Column(String(500))
 
-# class Transaction(Base):
-#     __tablename__ = 'transacao'
+class Extract(Base):
+    __tablename__ = 'extrato'
 
-#     id = Column(Integer, primary_key=True)
-#     value =  Column(Integer)
-#     type = Column(Enum(transactionType))
-#     description = Column(Text)
+    id = Column(Integer, primary_key=True)
+    saldo =  Column(Integer)
+    data_extrato = Column(Date)
+    limit = Column(Integer)
+    client = Column(Integer)
 
 class Transaction(BaseModel):
     valor:  int
@@ -101,43 +102,21 @@ async def create_item(id:int, transaction: Transaction):
         db.execute('CALL DEBITO(CLIENTE_TRANSACAO, SALDO_D, DESCRICAO_D)', transcation_dict)
     # puxar a proc
     # mandar as coisas p proc
-    transaction_response = {"valor": transaction.valor, "tipo": transaction.tipo, "descricao": transaction.descricao }
+    transaction_response = {"limite": transaction.valor, "saldo": transaction.tipo }
     return transaction_response
 
 
-@app.get('/products/search')
-async def search_product(keyword: str = Query(..., min_length=1), db = Depends(get_db)):
-    result = await redis.get(keyword)
-    if result:
-        return json.loads(result)
+@app.get('/clientes/{id}/extrato')
+async def get_extract(id: int, db = Depends(get_db)):
 
-    products = db.query(Product).filter(Product.name.ilike(f'%{keyword}%')).all()
+    cliente_extrato = db.query(Extract).filter(Extract.client.equals(id)).all()
     result = []
-    for product in products:
+    for transactions in cliente_extrato:
         result.append({
-            'name': product.name,
-            'price': product.price,
-            'description': product.description
+            'saldo': transactions.saldo,
+            'limite': transactions.limite,
+            'data_extrato': transactions.data_extrato
         })
-    await redis.set(keyword, json.dumps(result))
-
-    return result
-
-@app.get('/products/price-range')
-async def get_products_by_price_range(min_price: float = Query(...), max_price: float = Query(...), db = Depends(get_db)):
-    result = await redis.get(f'{min_price}_{max_price}')
-    if result:
-        return json.loads(result)
-
-    products = db.query(Product).filter(Product.price.between(min_price, max_price)).all()
-    result = []
-    for product in products:
-        result.append({
-            'name': product.name,
-            'price': product.price,
-            'description': product.description
-        })
-    await redis.set(f'{min_price}_{max_price}', json.dumps(result))
 
     return result
 
