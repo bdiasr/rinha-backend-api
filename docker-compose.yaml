@@ -1,0 +1,40 @@
+version: "3.9"
+services:
+  api-gateway:
+    container_name: api-gateway
+    image: nginx
+    restart: on-failure
+    build: ./gateway
+    ports:
+      - "8000:80"
+    depends_on:
+      - clientes-service
+
+  clientes-service:
+    container_name: clientes-api
+    build: ./clientes-service
+    restart: always
+    depends_on:
+      - db
+      - caching-db
+
+  db:
+    container_name: clientes-db
+    image: postgres
+    restart: always
+    volumes:
+      - postgresql_data:/var/lib/postgres/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: clientes_db
+
+  caching-db:
+    container_name: redis-caching
+    image: redis
+    restart: always
+
+volumes:
+  postgresql_data:
+  init.sql:
