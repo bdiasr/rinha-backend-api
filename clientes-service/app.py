@@ -49,6 +49,8 @@ class Extract(Base):
     cliente = Column(Integer)
 
 class Transaction(BaseModel):
+
+    id_transacao = Column(Integer, primary_key=True)
     valor:  int
     tipo: transactionType
     descricao: str
@@ -109,7 +111,7 @@ async def create_item(id:int, transaction: Transaction, db = Depends(get_db)):
 async def get_extract(id: int, extrato = Extract, db = Depends(get_db)):
     
     extratos = db.query(Extract).filter(Extract.id_extrato == id).all()
-    #transactions = db.query(Transaction).filter(Transaction.id == id).all()
+    transactions = db.query(Transaction).filter(Transaction.id_transacao == id).all()
     result = []
 
     for extrato in extratos:
@@ -118,7 +120,6 @@ async def get_extract(id: int, extrato = Extract, db = Depends(get_db)):
             'limite': extrato.limite,
             'data_extrato': extrato.data_extrato
         })
-    '''
     result.append("ultimas_transacoes:")
 
     for transaction in transactions:
@@ -126,26 +127,7 @@ async def get_extract(id: int, extrato = Extract, db = Depends(get_db)):
             'valor': transaction.valor,
             'tipo': transaction.tipo,
         })
-    '''
     return result, 200
-
-
-
-
-
-'''clientes = await redis.get('cliente')
-    if clientes:
-        return json.loads(clientes)
-    
-    clientes = db.query(Cliente).all()
-    result = []
-    for cliente in clientes:
-        result.append({
-            'name': cliente.nome_cliente,
-        })
-    await redis.set('clients', json.dumps(result))
-
-    return result, 200'''
 
 @app.get('/products/{name}')
 async def get_product_by_name(name: str, db = Depends(get_db)):
