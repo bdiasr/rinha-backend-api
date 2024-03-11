@@ -108,8 +108,14 @@ async def get_all_clients(db = Depends(get_db)):
 async def create_item(id:int, transaction: Transaction, db = Depends(get_db)):
     if(transaction.tipo is transactionType.D):
         db.execute(text("CALL DEBITO({}, {}, '{}')".format(id, transaction.valor, transaction.descricao)))
+        extrato = db.query(Extract).filter(Extract.cliente == id).order_by(Extract.id_extrato.desc()).first()
+        transaction_response = {"limite": extrato.limite, "saldo": extrato.saldo }
+        return transaction_response
     elif(transaction.tipo is transactionType.C):
         db.execute(text("CALL CREDITO({}, {}, '{}')".format(id, transaction.valor, transaction.descricao)))
+        extrato = db.query(Extract).filter(Extract.cliente == id).order_by(Extract.id_extrato.desc()).first()
+        transaction_response = {"limite": extrato.limite, "saldo": extrato.saldo }
+        return transaction_response
     # puxar a proc
     # mandar as coisas p proc
     transaction_response = {"limite": transaction.valor, "saldo": transaction.tipo }
@@ -119,8 +125,8 @@ async def create_item(id:int, transaction: Transaction, db = Depends(get_db)):
 @app.get('/clientes/{id}/extrato')
 async def get_extract(id: int, extrato = Extract, transacao = Transacao, db = Depends(get_db)):
     
-    extratos = db.query(Extract).filter(Extract.id_extrato == id).all()
-    transactions = db.query(Transacao).filter(Transacao.id_transacao == id).all()
+    extratos = db.query(Extract).filter(Extract.cliente == id).all()
+    transactions = db.query(Transacao).filter(Transacao.cliente == id).all()
     result = []
 
     for extrato in extratos:
