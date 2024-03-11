@@ -48,9 +48,18 @@ class Extract(Base):
     limite = Column(Integer)
     cliente = Column(Integer)
 
-class Transaction(BaseModel):
+class Transacao(Base):
+    __tablename__ = 'transacao'
 
     id_transacao = Column(Integer, primary_key=True)
+    valor =  Column(Integer)
+    tipo = transactionType
+    descricao = Column(String(10))
+    cliente = Column(Integer)
+    data_transacao =  Column(Date)
+
+class Transaction(BaseModel):
+
     valor:  int
     tipo: transactionType
     descricao: str
@@ -108,10 +117,10 @@ async def create_item(id:int, transaction: Transaction, db = Depends(get_db)):
 
 
 @app.get('/clientes/{id}/extrato')
-async def get_extract(id: int, extrato = Extract, db = Depends(get_db)):
+async def get_extract(id: int, extrato = Extract, transacao = Transacao, db = Depends(get_db)):
     
     extratos = db.query(Extract).filter(Extract.id_extrato == id).all()
-    transactions = db.query(Transaction).filter(Transaction.id_transacao == id).all()
+    transactions = db.query(Transacao).filter(Transacao.id_transacao == id).all()
     result = []
 
     for extrato in extratos:
@@ -122,10 +131,10 @@ async def get_extract(id: int, extrato = Extract, db = Depends(get_db)):
         })
     result.append("ultimas_transacoes:")
 
-    for transaction in transactions:
+    for transacao in transactions:
         result.append({
-            'valor': transaction.valor,
-            'tipo': transaction.tipo,
+            'valor': transacao.valor,
+            'tipo': transacao.tipo,
         })
     return result, 200
 
